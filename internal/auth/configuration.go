@@ -182,7 +182,9 @@ type ProviderConfig struct {
 	Scope        string       `mapstructure:"scope"`
 
 	// provider specific
+	AzureProviderConfig  AzureProviderConfig  `mapstructure:"azure"`
 	GoogleProviderConfig GoogleProviderConfig `mapstructure:"google"`
+	OIDCProviderConfig   OIDCProviderConfig   `mapstructure:"oidc"`
 	OktaProviderConfig   OktaProviderConfig   `mapstructure:"okta"`
 
 	// caching
@@ -225,6 +227,22 @@ func (pc ProviderConfig) Validate() error {
 	return nil
 }
 
+type AzureProviderConfig struct {
+	Tenant         string `mapstructure:"tenant"`
+	ApprovalPrompt string `mapstructure:"prompt"`
+}
+
+func (apc AzureProviderConfig) Validate() error {
+	if apc.Tenant == "" {
+		return xerrors.New("must specify tenant ID")
+	}
+
+	if apc.ApprovalPrompt == "" {
+		apc.ApprovalPrompt = "consent"
+	}
+	return nil
+}
+
 type GoogleProviderConfig struct {
 	Credentials    string `mapstructure:"credentials"`
 	Impersonate    string `mapstructure:"impersonate"`
@@ -245,6 +263,18 @@ func (gpc GoogleProviderConfig) Validate() error {
 			return xerrors.Errorf("invalid google.credentials filepath: %w", err)
 		}
 		r.Close()
+	}
+
+	return nil
+}
+
+type OIDCProviderConfig struct {
+	DiscoveryURL string `mapstructure:"discovery"`
+}
+
+func (opc OIDCProviderConfig) Validate() error {
+	if opc.DiscoveryURL == "" {
+		return xerrors.New("must specify discovery URL")
 	}
 
 	return nil
