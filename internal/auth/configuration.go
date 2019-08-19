@@ -232,6 +232,9 @@ func (pc ProviderConfig) Validate() error {
 	case "cognito":
 		if err := pc.AmazonCognitoProviderConfig.Validate(); err != nil {
 			return xerrors.Errorf("invalid provider.cognito config: %w", err)
+	case "oidc":
+		if err := pc.OIDCProviderConfig.Validate(); err != nil {
+			return xerrors.Errorf("invalid provider.oidc config: %w", err)
 		}
 	case "test":
 		break
