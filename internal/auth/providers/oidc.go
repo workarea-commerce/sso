@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"time"
 
-	"golang.org/x/oauth2"
+	oauth2 "golang.org/x/oauth2"
 
 	log "github.com/buzzfeed/sso/internal/pkg/logging"
 	"github.com/buzzfeed/sso/internal/pkg/sessions"
@@ -18,13 +19,29 @@ import (
 type OIDCProvider struct {
 	*ProviderData
 
-	Verifier *oidc.IDTokenVerifier
+	DiscoveryURL string
+	Verifier     *oidc.IDTokenVerifier
+}
+
+// OIDCToken is a generic token source
+type OIDCToken struct {
+	AccessToken string
+}
+
+// Token returns token matching expected interface
+func (p *OIDCToken) Token() (*oauth2.Token, error) {
+	token := &oauth2.Token{
+		AccessToken: p.AccessToken,
+		TokenType:   "bearer",
+	}
+	return token, nil
 }
 
 // NewOIDCProvider creates a new generic OpenID Connect provider
 func NewOIDCProvider(p *ProviderData, discoveryURL string) (*OIDCProvider, error) {
 	provider := &OIDCProvider{
 		ProviderData: p,
+		DiscoveryURL: discoveryURL,
 	}
 	if p.ProviderName == "" {
 		p.ProviderName = "OpenID Connect"
@@ -177,4 +194,60 @@ func (p *OIDCProvider) ValidateSessionState(s *sessions.SessionState) bool {
 	// return validateToken(p, s.AccessToken, nil)
 	// TODO Validate ID token
 	return true
+}
+
+// ValidateGroupMembership takes in an email and the allowed groups and returns the groups that the email is part of in that list.
+// If `allGroups` is an empty list it returns all the groups that the user belongs to.
+func (p *OIDCProvider) ValidateGroupMembership(email string, allowedGroups []string, accessToken string) ([]string, error) {
+	if accessToken == "" {
+		return nil, ErrBadRequest
+	}
+
+	if len(allowedGroups) == 0 {
+		return []string{}, nil
+	}
+	userinfo, err := p.GetUserProfile(accessToken)
+	if err != nil {
+		return nil, err
+	}
+	if len(userinfo.Groups) == 0 {
+		return nil, errors.New("no group membership found")
+	}
+
+	matchingGroups := []string{}
+	for _, x := range allowedGroups {
+		for _, y := range userinfo.Groups {
+			if x == y {
+				matchingGroups = append(matchingGroups, x)
+				break
+			}
+		}
+	}
+	return matchingGroups, nil
+}
+
+// GetUserProfile takes in an access token and sends a request to the /userinfo endpoint.
+// Conditionally returns nil response or a struct of specified claims.
+func (p *OIDCProvider) GetUserProfile(AccessToken string) (*GetUserProfileResponse, error) {
+	response := &GetUserProfileResponse{}
+
+
+	if AccessToken == "" {
+		return nil, ErrBadRequest
+	}
+
+	token := OIDCToken{
+		AccessToken: AccessToken,
+	}
+	oidcProvider, _ := oidc.NewProvider(context.Background(), p.DiscoveryURL)
+	userInfo, err := oidcProvider.UserInfo(context.Background(), &token)
+	if err != nil {
+		return nil, err
+	}
+	if err := userInfo.Claims(&response); err != nil {
+		return nil, fmt.Errorf("failed to parse userInfo claims: %v", err)
+	}
+
+
+	return response, nil
 }
