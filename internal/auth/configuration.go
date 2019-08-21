@@ -215,7 +215,9 @@ func (pc ProviderConfig) Validate() error {
 			return xerrors.Errorf("invalid provider.okta config: %w", err)
 		}
 	case "oidc":
-		break
+		if err := pc.OIDCProviderConfig.Validate(); err != nil {
+			return xerrors.Errorf("invalid provider.oidc config: %w", err)
+		}
 	case "test":
 		break
 	default:
