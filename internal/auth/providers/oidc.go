@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 	"net/url"
 	"time"
 
@@ -231,7 +230,6 @@ func (p *OIDCProvider) ValidateGroupMembership(email string, allowedGroups []str
 func (p *OIDCProvider) GetUserProfile(AccessToken string) (*GetUserProfileResponse, error) {
 	response := &GetUserProfileResponse{}
 
-
 	if AccessToken == "" {
 		return nil, ErrBadRequest
 	}
@@ -247,7 +245,6 @@ func (p *OIDCProvider) GetUserProfile(AccessToken string) (*GetUserProfileRespon
 	if err := userInfo.Claims(&response); err != nil {
 		return nil, fmt.Errorf("failed to parse userInfo claims: %v", err)
 	}
-
 
 	return response, nil
 }
