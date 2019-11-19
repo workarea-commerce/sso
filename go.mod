@@ -16,7 +16,7 @@ require (
 	github.com/sirupsen/logrus v1.4.2
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
-	golang.org/x/xerrors v0.0.0-20190513163551-3ee3066db522
+	golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898
 	google.golang.org/api v0.5.0
 	gopkg.in/yaml.v2 v2.2.2
 )
