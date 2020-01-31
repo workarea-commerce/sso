@@ -72,7 +72,33 @@ func (p *SingleFlightProvider) Redeem(redirectURL, code string) (*sessions.Sessi
 
 // ValidateGroup takes an email, allowedGroups, and userGroups and passes it to the provider's ValidateGroup function and returns the response
 func (p *SingleFlightProvider) ValidateGroup(email string, allowedGroups []string, accessToken string) ([]string, bool, error) {
-	return p.provider.ValidateGroup(email, allowedGroups, accessToken)
+	type Response struct {
+		InGroups []string
+		Allowed  bool
+	}
+	response, err := p.do("ValidateGroup", fmt.Sprintf("%s:%s", email, strings.Join(allowedGroups, ",")),
+		func() (interface{}, error) {
+			inGroups, allowed, err := p.ValidateGroup(email, allowedGroups, accessToken)
+			if err != nil {
+				return nil, err
+			}
+
+			return &Response{
+				InGroups: inGroups,
+				Allowed:  allowed,
+			}, nil
+		})
+
+	if err != nil {
+		return nil, false, err
+	}
+
+	r, ok := response.(*Response)
+	if !ok {
+		return nil, false, ErrUnexpectedReturnType
+	}
+
+	return r.InGroups, r.Allowed, nil
 }
 
 // UserGroups takes an email and passes it to the provider's UserGroups function and returns the response
