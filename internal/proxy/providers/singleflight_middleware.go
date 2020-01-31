@@ -76,18 +76,18 @@ func (p *SingleFlightProvider) ValidateGroup(email string, allowedGroups []strin
 		InGroups []string
 		Allowed  bool
 	}
-	response, err := p.do("ValidateGroup", fmt.Sprintf("%s:%s", email, strings.Join(allowedGroups, ",")),
-		func() (interface{}, error) {
-			inGroups, allowed, err := p.ValidateGroup(email, allowedGroups, accessToken)
-			if err != nil {
-				return nil, err
-			}
+	response, err := p.do("ValidateGroup", fmt.Sprintf("%s:%s", email, strings.Join(allowedGroups, ",")), func() (interface{}, error) {
+		sort.Strings(allowedGroups)
+		inGroups, allowed, err := p.provider.ValidateGroup(email, allowedGroups, accessToken)
+		if err != nil {
+			return nil, err
+		}
 
-			return &Response{
-				InGroups: inGroups,
-				Allowed:  allowed,
-			}, nil
-		})
+		return &Response{
+			InGroups: inGroups,
+			Allowed:  allowed,
+		}, nil
+	})
 
 	if err != nil {
 		return nil, false, err
