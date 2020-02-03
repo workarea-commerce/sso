@@ -168,7 +168,7 @@ func (p *SingleFlightProvider) RefreshSessionTokenTest(s *sessions.SessionState)
 		if err != nil {
 			return nil, err
 		}
-		return &RefreshResponse{
+		return &Response{
 			Ok:          ok,
 			AccessToken: accessToken,
 		}, nil
