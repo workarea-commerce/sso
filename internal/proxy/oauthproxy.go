@@ -769,7 +769,7 @@ func (p *OAuthProxy) Authenticate(rw http.ResponseWriter, req *http.Request) (er
 		// - attempt to refresh the session
 		// - run email domain, email address, and email group validations against the session (if defined).
 
-		ok, accessToken, err := p.provider.RefreshSessionTokenTest(session)
+		ok, err := p.provider.RefreshSessionToken(session)
 		// We failed to refresh the session successfully
 		// clear the cookie and reject the request
 		if err != nil {
@@ -784,21 +784,16 @@ func (p *OAuthProxy) Authenticate(rw http.ResponseWriter, req *http.Request) (er
 			return ErrUserNotAuthorized
 		}
 
-		matchedGroups, valid, err := v.Provider.ValidateGroup(session.Email, v.AllowedGroups, accessToken)
+		err = p.runValidatorsWithGracePeriod(session)
 		if err != nil {
-			if err == providers.ErrAuthProviderUnavailable && session.IsWithinGracePeriod(p.provider.Data().GracePeriodTTL) {
+			switch err {
+			case providers.ErrAuthProviderUnavailable:
 				tags = append(tags, "action:refresh_session", "error:validation_failed")
 				p.StatsdClient.Incr("provider_error_fallback", tags, 1.0)
 				session.RefreshDeadline = sessions.ExtendDeadline(p.provider.Data().SessionValidTTL)
-			} else {
+			default:
 				return ErrUserNotAuthorized
 			}
-		}
-
-		if valid {
-			session.groups = matchedGroups
-		} else {
-			return ErrUserNotAuthorized
 		}
 
 		err = p.sessionStore.SaveSession(rw, req, session)
