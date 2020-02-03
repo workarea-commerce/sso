@@ -15,7 +15,7 @@ type Provider interface {
 	UserGroups(string, []string, string) ([]string, error)
 	ValidateSessionToken(*sessions.SessionState) bool
 	RefreshSessionToken(*sessions.SessionState) (bool, error)
-	RefreshTokenTest(*sessions.SessionState) (bool, string, error)
+	RefreshSessionTokenTest(*sessions.SessionState) (bool, string, error)
 	GetSignInURL(redirectURL *url.URL, finalRedirect string) *url.URL
 	GetSignOutURL(redirectURL *url.URL) *url.URL
 }

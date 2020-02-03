@@ -160,11 +160,11 @@ func (p *SingleFlightProvider) RefreshSessionToken(s *sessions.SessionState) (bo
 // returns false if the session is not refreshed and true if it is.
 func (p *SingleFlightProvider) RefreshSessionTokenTest(s *sessions.SessionState) (bool, string, error) {
 	type RefreshResponse struct {
-		InGroups []string
-		Allowed  bool
+		Ok          bool
+		AccessToken string
 	}
 	response, err := p.do("RefreshSessionTokenTest", s.RefreshToken, func() (interface{}, error) {
-		ok, accessToken, err := p.provider.RefreshTokenTest(s)
+		ok, accessToken, err := p.provider.RefreshSessionTokenTest(s)
 		if err != nil {
 			return nil, err
 		}

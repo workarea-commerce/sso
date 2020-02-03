@@ -784,7 +784,8 @@ func (p *OAuthProxy) Authenticate(rw http.ResponseWriter, req *http.Request) (er
 			return ErrUserNotAuthorized
 		}
 
-		matchedGroups, valid, err := v.Provider.ValidateGroup(session.Email, v.AllowedGroups, accessToken)
+		allowedGroups := p.upstreamConfig.AllowedGroups
+		matchedGroups, valid, err := p.provider.ValidateGroup(session.Email, allowedGroups, accessToken)
 		if err != nil {
 			if err == providers.ErrAuthProviderUnavailable && session.IsWithinGracePeriod(p.provider.Data().GracePeriodTTL) {
 				tags = append(tags, "action:refresh_session", "error:validation_failed")
@@ -796,7 +797,7 @@ func (p *OAuthProxy) Authenticate(rw http.ResponseWriter, req *http.Request) (er
 		}
 
 		if valid {
-			session.groups = matchedGroups
+			session.Groups = matchedGroups
 		} else {
 			return ErrUserNotAuthorized
 		}
