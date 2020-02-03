@@ -8,12 +8,11 @@ import (
 
 // TestProvider is a mock provider
 type TestProvider struct {
-	RefreshSessionTokenFunc     func(*sessions.SessionState) (bool, error)
-	RefreshSessionTokenTestFunc func(*sessions.SessionState) (bool, string, error)
-	ValidateSessionTokenFunc    func(*sessions.SessionState) bool
-	RedeemFunc                  func(string, string) (*sessions.SessionState, error)
-	UserGroupsFunc              func(string, []string, string) ([]string, error)
-	ValidateGroupsFunc          func(string, []string, string) ([]string, bool, error)
+	RefreshSessionTokenFunc  func(*sessions.SessionState) (bool, error)
+	ValidateSessionTokenFunc func(*sessions.SessionState) bool
+	RedeemFunc               func(string, string) (*sessions.SessionState, error)
+	UserGroupsFunc           func(string, []string, string) ([]string, error)
+	ValidateGroupsFunc       func(string, []string, string) ([]string, bool, error)
 	*ProviderData
 }
 
@@ -60,11 +59,6 @@ func (tp *TestProvider) Redeem(redirectURL string, token string) (*sessions.Sess
 // RefreshSessionToken mocks the RefreshSessionToken function
 func (tp *TestProvider) RefreshSessionToken(s *sessions.SessionState) (bool, error) {
 	return tp.RefreshSessionTokenFunc(s)
-}
-
-// RefreshSessionToken mocks the RefreshSessionToken function
-func (tp *TestProvider) RefreshSessionTokenTest(s *sessions.SessionState) (bool, string, error) {
-	return tp.RefreshSessionTokenTestFunc(s)
 }
 
 // UserGroups mocks the UserGroups function
