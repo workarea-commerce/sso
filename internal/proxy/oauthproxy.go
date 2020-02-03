@@ -776,6 +776,7 @@ func (p *OAuthProxy) Authenticate(rw http.ResponseWriter, req *http.Request) (er
 			logger.WithUser(session.Email).Error(err, "refreshing session failed")
 			return err
 		}
+		logger.WithUser(session.Email).Info("debug: successfully refreshed session")
 		if !ok {
 			// User is not authorized after refresh
 			// clear the cookie and reject the request
@@ -795,6 +796,7 @@ func (p *OAuthProxy) Authenticate(rw http.ResponseWriter, req *http.Request) (er
 				return ErrUserNotAuthorized
 			}
 		}
+		logger.WithUser(session.Email).Info("debug: successfully validated groups")
 
 		if valid {
 			session.Groups = matchedGroups
