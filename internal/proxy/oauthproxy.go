@@ -783,8 +783,10 @@ func (p *OAuthProxy) Authenticate(rw http.ResponseWriter, req *http.Request) (er
 				"not authorized after refreshing session")
 			return ErrUserNotAuthorized
 		}
+		var temporarySession = &sessions.SessionState{}
+		*temporarySession = *session
 
-		err = p.runValidatorsWithGracePeriod(session)
+		err = p.runValidatorsWithGracePeriod(temporarySession)
 		if err != nil {
 			switch err {
 			case providers.ErrAuthProviderUnavailable:
