@@ -156,6 +156,36 @@ func (p *SingleFlightProvider) RefreshSessionToken(s *sessions.SessionState) (bo
 	return r, nil
 }
 
+// RefreshSessionToken takes in a SessionState and
+// returns false if the session is not refreshed and true if it is.
+func (p *SingleFlightProvider) RefreshSessionTokenTest(s *sessions.SessionState) (bool, string, error) {
+	type RefreshResponse struct {
+		InGroups []string
+		Allowed  bool
+	}
+	response, err := p.do("RefreshSessionTokenTest", s.RefreshToken, func() (interface{}, error) {
+		ok, accessToken, err := p.provider.RefreshTokenTest(s)
+		if err != nil {
+			return nil, err
+		}
+		return &Response{
+			Ok:          ok,
+			AccessToken: accessToken,
+		}, nil
+	})
+
+	if err != nil {
+		return false, "", err
+	}
+
+	r, ok := response.(*RefreshResponse)
+	if !ok {
+		return false, "", ErrUnexpectedReturnType
+	}
+
+	return r.Ok, r.AccessToken, nil
+}
+
 // GetSignInURL calls the GetSignInURL for the provider, which will return the sign in url
 func (p *SingleFlightProvider) GetSignInURL(redirectURI *url.URL, finalRedirect string) *url.URL {
 	return p.provider.GetSignInURL(redirectURI, finalRedirect)

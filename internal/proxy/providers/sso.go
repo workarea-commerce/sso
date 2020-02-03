@@ -264,6 +264,36 @@ func (p *SSOProvider) RefreshSessionToken(s *sessions.SessionState) (bool, error
 	return true, nil
 }
 
+// RefreshSessionToken takes a SessionState and refreshes the session access token,
+// returns `true` on success, and `false` on error
+func (p *SSOProvider) RefreshSessionTokenTest(s *sessions.SessionState) (bool, string, error) {
+	logger := log.NewLogEntry()
+
+	if s.RefreshToken == "" {
+		return false, "", ErrMissingRefreshToken
+	}
+
+	newToken, duration, err := p.redeemRefreshToken(s.RefreshToken)
+	if err != nil {
+		// When we detect that the auth provider is not explicitly denying
+		// authentication, and is merely unavailable, we refresh and continue
+		// as normal during the "grace period"
+		if err == ErrAuthProviderUnavailable && s.IsWithinGracePeriod(p.GracePeriodTTL) {
+			tags := []string{"action:refresh_session", "error:redeem_token_failed"}
+			p.StatsdClient.Incr("provider_error_fallback", tags, 1.0)
+			s.RefreshDeadline = sessions.ExtendDeadline(p.SessionValidTTL)
+			return true, "", nil
+		}
+		return false, "", err
+	}
+
+	s.AccessToken = newToken
+	s.RefreshDeadline = sessions.ExtendDeadline(duration)
+	s.GracePeriodStart = time.Time{}
+	logger.WithUser(s.Email).WithRefreshDeadline(s.RefreshDeadline).Info("refreshed session access token")
+	return true, newToken, nil
+}
+
 func (p *SSOProvider) redeemRefreshToken(refreshToken string) (token string, expires time.Duration, err error) {
 	// https://developers.google.com/identity/protocols/OAuth2WebServer#refresh
 	params := url.Values{}
