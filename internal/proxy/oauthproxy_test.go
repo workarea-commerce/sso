@@ -389,8 +389,9 @@ func TestAuthOnlyEndpoint(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			providerURL, _ := url.Parse("http://localhost/")
 			tp := providers.NewTestProvider(providerURL, "")
-			tp.RefreshSessionTokenFunc = func(*sessions.SessionState) (bool, error) { return true, nil }
+			tp.RefreshSessionTokenTestFunc = func(*sessions.SessionState) (bool, string, error) { return true, "testAccessToken", nil }
 			tp.ValidateSessionTokenFunc = func(*sessions.SessionState) bool { return true }
+			tp.ValidateGroupsFunc = func(string, []string, string) ([]string, bool, error) { return []string{"testGroup"}, true, nil }
 
 			proxy, close := testNewOAuthProxy(t,
 				setSessionStore(tc.sessionStore),
@@ -554,7 +555,7 @@ func TestAuthenticate(t *testing.T) {
 		SessionStore             *sessions.MockSessionStore
 		ExpectedErr              error
 		CookieExpectation        int // One of: {NewCookie, ClearCookie, KeepCookie}
-		RefreshSessionTokenFunc  func(*sessions.SessionState) (bool, error)
+		RefreshSessionTokenFunc  func(*sessions.SessionState) (bool, string, error)
 		ValidateSessionTokenFunc func(*sessions.SessionState) bool
 	}{
 		{
@@ -623,7 +624,7 @@ func TestAuthenticate(t *testing.T) {
 			},
 			ExpectedErr:             ErrRefreshFailed,
 			CookieExpectation:       ClearCookie,
-			RefreshSessionTokenFunc: func(s *sessions.SessionState) (bool, error) { return false, ErrRefreshFailed },
+			RefreshSessionTokenFunc: func(s *sessions.SessionState) (bool, string, error) { return false, "", ErrRefreshFailed },
 		},
 		{
 			Name: "refresh expired, user not OK, do not authenticate",
@@ -639,7 +640,7 @@ func TestAuthenticate(t *testing.T) {
 			},
 			ExpectedErr:             ErrUserNotAuthorized,
 			CookieExpectation:       ClearCookie,
-			RefreshSessionTokenFunc: func(s *sessions.SessionState) (bool, error) { return false, nil },
+			RefreshSessionTokenFunc: func(s *sessions.SessionState) (bool, string, error) { return false, "", nil },
 		},
 		{
 			Name: "refresh expired, user OK, authenticate",
@@ -655,7 +656,7 @@ func TestAuthenticate(t *testing.T) {
 			},
 			ExpectedErr:             nil,
 			CookieExpectation:       NewCookie,
-			RefreshSessionTokenFunc: func(s *sessions.SessionState) (bool, error) { return true, nil },
+			RefreshSessionTokenFunc: func(s *sessions.SessionState) (bool, string, error) { return true, "testAccessToken", nil },
 		},
 		{
 			Name: "refresh expired, refresh and user OK, error saving session",
@@ -672,7 +673,7 @@ func TestAuthenticate(t *testing.T) {
 			},
 			ExpectedErr:             SaveCookieFailed,
 			CookieExpectation:       ClearCookie,
-			RefreshSessionTokenFunc: func(s *sessions.SessionState) (bool, error) { return true, nil },
+			RefreshSessionTokenFunc: func(s *sessions.SessionState) (bool, string, error) { return true, "testAccessToken", nil },
 		},
 		{
 			Name: "validation expired, user not OK, do not authenticate",
@@ -742,8 +743,9 @@ func TestAuthenticate(t *testing.T) {
 		t.Run(tc.Name, func(t *testing.T) {
 			providerURL, _ := url.Parse("http://localhost/")
 			tp := providers.NewTestProvider(providerURL, "")
-			tp.RefreshSessionTokenFunc = tc.RefreshSessionTokenFunc
+			tp.RefreshSessionTokenTestFunc = tc.RefreshSessionTokenFunc
 			tp.ValidateSessionTokenFunc = tc.ValidateSessionTokenFunc
+			tp.ValidateGroupsFunc = func(string, []string, string) ([]string, bool, error) { return []string{"testGroup"}, true, nil }
 
 			proxy, close := testNewOAuthProxy(t,
 				SetProvider(tp),
@@ -784,7 +786,7 @@ func TestAuthenticationUXFlows(t *testing.T) {
 		Name string
 
 		SessionStore             *sessions.MockSessionStore
-		RefreshSessionTokenFunc  func(*sessions.SessionState) (bool, error)
+		RefreshSessionTokenFunc  func(*sessions.SessionState) (bool, string, error)
 		ValidateSessionTokenFunc func(*sessions.SessionState) bool
 
 		ExpectStatusCode int
@@ -848,7 +850,7 @@ func TestAuthenticationUXFlows(t *testing.T) {
 					ValidDeadline:      time.Now().Add(time.Duration(1) * time.Minute),
 				},
 			},
-			RefreshSessionTokenFunc: func(s *sessions.SessionState) (bool, error) { return false, ErrRefreshFailed },
+			RefreshSessionTokenFunc: func(s *sessions.SessionState) (bool, string, error) { return false, "", ErrRefreshFailed },
 			ExpectStatusCode:        http.StatusInternalServerError,
 		},
 		{
@@ -863,7 +865,7 @@ func TestAuthenticationUXFlows(t *testing.T) {
 					ValidDeadline:      time.Now().Add(time.Duration(1) * time.Minute),
 				},
 			},
-			RefreshSessionTokenFunc: func(s *sessions.SessionState) (bool, error) { return false, nil },
+			RefreshSessionTokenFunc: func(s *sessions.SessionState) (bool, string, error) { return false, "", nil },
 			ExpectStatusCode:        http.StatusForbidden,
 		},
 		{
@@ -878,7 +880,7 @@ func TestAuthenticationUXFlows(t *testing.T) {
 					ValidDeadline:      time.Now().Add(time.Duration(1) * time.Minute),
 				},
 			},
-			RefreshSessionTokenFunc: func(s *sessions.SessionState) (bool, error) { return true, nil },
+			RefreshSessionTokenFunc: func(s *sessions.SessionState) (bool, string, error) { return true, "testAccessToken", nil },
 			ExpectStatusCode:        http.StatusOK,
 		},
 		{
@@ -894,7 +896,7 @@ func TestAuthenticationUXFlows(t *testing.T) {
 				},
 				SaveError: SaveCookieFailed,
 			},
-			RefreshSessionTokenFunc: func(s *sessions.SessionState) (bool, error) { return true, nil },
+			RefreshSessionTokenFunc: func(s *sessions.SessionState) (bool, string, error) { return true, "testAccessToken", nil },
 			ExpectStatusCode:        http.StatusInternalServerError,
 		},
 		{
@@ -947,8 +949,9 @@ func TestAuthenticationUXFlows(t *testing.T) {
 		t.Run(tc.Name, func(t *testing.T) {
 			providerURL, _ := url.Parse("http://localhost/")
 			tp := providers.NewTestProvider(providerURL, "")
-			tp.RefreshSessionTokenFunc = tc.RefreshSessionTokenFunc
+			tp.RefreshSessionTokenTestFunc = tc.RefreshSessionTokenFunc
 			tp.ValidateSessionTokenFunc = tc.ValidateSessionTokenFunc
+			tp.ValidateGroupsFunc = func(string, []string, string) ([]string, bool, error) { return []string{"testGroup"}, true, nil }
 
 			proxy, close := testNewOAuthProxy(t,
 				SetProvider(tp),
