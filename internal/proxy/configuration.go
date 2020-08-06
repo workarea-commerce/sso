@@ -410,7 +410,6 @@ func (dc DefaultConfig) Validate() error {
 	}
 
 	return nil
-	// if provider == google, check google creds are setup? vice versa with okta?
 	//TODO tests here - timeout and reset deadline?
 }
 
