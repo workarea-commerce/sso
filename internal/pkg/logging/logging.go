@@ -152,7 +152,7 @@ func (l *LogEntry) WithAuthorizedUpstream(upstream string) *LogEntry {
 // WithError appends an `error` tag to a LogEntry. Useful for annotating non-Error log
 // entries (e.g. Fatal messages) with an `error` object.
 func (l *LogEntry) WithError(err error) *LogEntry {
-	return l.withField("error", err)
+	return l.withField("error_msg", err)
 }
 
 // WithHTTPStatus appends an `http_status` tag to a LogEntry.
