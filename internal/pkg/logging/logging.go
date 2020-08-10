@@ -158,12 +158,14 @@ func (l *LogEntry) WithAuthorizedUpstream(upstream string) *LogEntry {
 //		"kind", err.)
 //}
 
+type Fields map[string]interface{}
+
 func (l *LogEntry) WithError(err error) *LogEntry {
-	fields := l.Fields{
+	fields := Fields{
 		"message": err.Error(),
 		"kind":    fmt.Sprintf("%T", err),
 	}
-	return l.WithField("error", fields)
+	return l.withField("error", fields)
 }
 
 // WithHTTPStatus appends an `http_status` tag to a LogEntry.
