@@ -33,7 +33,7 @@ func (t *upstreamTransport) RoundTrip(req *http.Request) (*http.Response, error)
 
 	resp, err := t.getTransport().RoundTrip(req)
 	if err != nil {
-		logger.Error(err, "error in upstreamTransport RoundTrip")
+		logger.WithError(err).Error("error in upstreamTransport RoundTrip")
 		return nil, err
 	}
 
@@ -177,8 +177,8 @@ func (d *Director) RewriteDirectorFunc(route *RewriteRoute) func(*http.Request) 
 		target, err := urlParse(route.ToTemplate.Scheme, rewritten)
 		if err != nil {
 			// we aren't in an error handling context so we have to fake it(thanks stdlib!)
-			logger.WithRequestHost(req.Host).WithRewriteRoute(route).Error(
-				err, "unable to parse and replace rewrite url")
+			logger.WithRequestHost(req.Host).WithRewriteRoute(route).WithError(err).Error(
+				"unable to parse and replace rewrite url")
 			req.URL = nil // this will raise an error in http.RoundTripper
 			return
 		}

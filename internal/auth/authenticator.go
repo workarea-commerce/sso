@@ -96,7 +96,7 @@ func NewAuthenticator(config Configuration, optionFuncs ...func(*Authenticator) 
 	for _, optFunc := range optionFuncs {
 		err := optFunc(p)
 		if err != nil {
-			logger.Error(err)
+			logger.WithError(err).Error("error applying option functions to new Authenticator")
 			return nil, err
 		}
 	}
@@ -172,7 +172,7 @@ func (p *Authenticator) authenticate(rw http.ResponseWriter, req *http.Request) 
 	// TODO remove refresh cookie bool when we remove payloads cipher logic
 	session, err := p.sessionStore.LoadSession(req)
 	if err != nil {
-		logger.WithRemoteAddress(remoteAddr).Error(err, "error loading session")
+		logger.WithRemoteAddress(remoteAddr).WithError(err).Error("error loading session")
 		p.sessionStore.ClearSession(rw, req)
 		return nil, err
 	}
@@ -188,7 +188,7 @@ func (p *Authenticator) authenticate(rw http.ResponseWriter, req *http.Request) 
 		// We failed to refresh the session successfully
 		// clear the cookie and reject the request
 		if err != nil {
-			logger.WithUser(session.Email).Error(err, "refreshing session failed")
+			logger.WithUser(session.Email).WithError(err).Error("refreshing session failed")
 			p.sessionStore.ClearSession(rw, req)
 			return nil, err
 		}
@@ -206,7 +206,7 @@ func (p *Authenticator) authenticate(rw http.ResponseWriter, req *http.Request) 
 			// We refreshed the session successfully, but failed to save it.
 			// This could be from failing to encode the session properly.
 			// But, we clear the session cookie and reject the request
-			logger.WithUser(session.Email).Error(err, "could not save refreshed session")
+			logger.WithUser(session.Email).WithError(err).Error("could not save refreshed session")
 			p.sessionStore.ClearSession(rw, req)
 			return nil, err
 		}
@@ -222,7 +222,7 @@ func (p *Authenticator) authenticate(rw http.ResponseWriter, req *http.Request) 
 			// We validated the session successfully, but failed to save it.
 			// This could be from failing to encode the session properly.
 			// But, we clear the session cookie and reject the request!
-			logger.WithUser(session.Email).Error(err, "could not save validated session")
+			logger.WithUser(session.Email).WithError(err).Error("could not save validated session")
 			p.sessionStore.ClearSession(rw, req)
 			return nil, err
 		}
@@ -390,7 +390,7 @@ func (p *Authenticator) SignOut(rw http.ResponseWriter, req *http.Request) {
 		return
 	default:
 		// a different error, clear the session cookie and redirect
-		logger.Error(err, "error loading cookie session")
+		logger.WithError(err).Error("error loading cookie session")
 		p.sessionStore.ClearSession(rw, req)
 		http.Redirect(rw, req, redirectURI, http.StatusFound)
 		return
@@ -400,7 +400,7 @@ func (p *Authenticator) SignOut(rw http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		tags = append(tags, "error:revoke_session")
 		p.StatsdClient.Incr("provider_error", tags, 1.0)
-		logger.Error(err, "error revoking session")
+		logger.WithError(err).Error("error revoking session")
 		p.SignOutPage(rw, req, "An error occurred during sign out. Please try again.")
 		return
 	}
@@ -542,8 +542,8 @@ func (p *Authenticator) getOAuthCallback(rw http.ResponseWriter, req *http.Reque
 	if err != nil {
 		tags = append(tags, "error:redeem_code")
 		p.StatsdClient.Incr("provider_error", tags, 1.0)
-		logger.WithRemoteAddress(remoteAddr).Error(
-			err, "error redeeming authentication code")
+		logger.WithRemoteAddress(remoteAddr).WithError(err).Error(
+			"error redeeming authentication code")
 		return "", err
 	}
 
@@ -569,8 +569,9 @@ func (p *Authenticator) getOAuthCallback(rw http.ResponseWriter, req *http.Reque
 	if c.Value != nonce {
 		tags = append(tags, "error:csrf_token_mismatch")
 		p.StatsdClient.Incr("application_error", tags, 1.0)
-		logger.WithRemoteAddress(remoteAddr).Error(
-			"csrf_token_mismatch", "POTENTIAL ATTACK: CSRF token mismatch")
+		logger.WithRemoteAddress(remoteAddr).WithError(
+			Errors.New("csrf_token_mismatch")).Error(
+			"POTENTIAL ATTACK: CSRF token mismatch")
 		return "", HTTPError{Code: http.StatusForbidden, Message: "csrf failed"}
 	}
 
@@ -607,7 +608,7 @@ func (p *Authenticator) getOAuthCallback(rw http.ResponseWriter, req *http.Reque
 	if err != nil {
 		tags = append(tags, "error:save_session_failed")
 		p.StatsdClient.Incr("application_error", tags, 1.0)
-		logger.WithRemoteAddress(remoteAddr).Error(err, "internal error")
+		logger.WithRemoteAddress(remoteAddr).WithError(err).Error("internal error")
 		return "", HTTPError{Code: http.StatusInternalServerError, Message: "Internal Error"}
 	}
 	return redirect, nil
@@ -650,7 +651,7 @@ func (p *Authenticator) Redeem(rw http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		tags = append(tags, "error:invalid_auth_code")
 		p.StatsdClient.Incr("application_error", tags, 1.0)
-		logger.WithHTTPStatus(http.StatusUnauthorized).Error(err, "invalid auth code")
+		logger.WithHTTPStatus(http.StatusUnauthorized).WithError(err).Error("invalid auth code")
 		http.Error(rw, fmt.Sprintf("invalid auth code: %s", err.Error()), http.StatusUnauthorized)
 		return
 	}
@@ -762,7 +763,7 @@ func (p *Authenticator) GetProfile(rw http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		tags = append(tags, "error:groups_resource")
 		p.StatsdClient.Incr("provider_error", tags, 1.0)
-		logger.Error(err, "error retrieving groups")
+		logger.WithError(err).Error("error retrieving groups")
 		p.ErrorResponse(rw, req, err.Error(), codeForError(err))
 		return
 	}

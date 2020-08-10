@@ -331,7 +331,7 @@ func (p *OAuthProxy) XHRError(rw http.ResponseWriter, req *http.Request, code in
 		return
 	}
 
-	logger.WithHTTPStatus(code).WithRequestURI(req.URL.String()).Error(err, "error serving XHR")
+	logger.WithHTTPStatus(code).WithRequestURI(req.URL.String()).WithError(err).Error("error serving XHR")
 	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(code)
 	rw.Write(jsonBytes)
@@ -457,7 +457,7 @@ func (p *OAuthProxy) OAuthStart(rw http.ResponseWriter, req *http.Request, tags 
 	if err != nil {
 		tags = append(tags, "csrf_token_error")
 		p.StatsdClient.Incr("application_error", tags, 1.0)
-		logger.Error(err, "failed to marshal state parameter for CSRF token")
+		logger.WithError(err).Error("failed to marshal state parameter for CSRF token")
 		p.ErrorPage(rw, req, http.StatusInternalServerError, "Internal Error", err.Error())
 		return
 	}
@@ -469,7 +469,7 @@ func (p *OAuthProxy) OAuthStart(rw http.ResponseWriter, req *http.Request, tags 
 	if err != nil {
 		tags = append(tags, "error:marshaling_state_parameter")
 		p.StatsdClient.Incr("application_error", tags, 1.0)
-		logger.Error(err, "failed to marshal state parameter for state query parameter")
+		logger.WithError(err).Error("failed to marshal state parameter for state query parameter")
 		p.ErrorPage(rw, req, http.StatusInternalServerError, "Internal Error", err.Error())
 		return
 	}
@@ -511,8 +511,8 @@ func (p *OAuthProxy) OAuthCallback(rw http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		tags = append(tags, "error:redeem_code_error")
 		p.StatsdClient.Incr("provider_error", tags, 1.0)
-		logger.WithRemoteAddress(remoteAddr).Error(
-			err, "error redeeming authorization code")
+		logger.WithRemoteAddress(remoteAddr).WithError(err).Error(
+			"error redeeming authorization code")
 		p.ErrorPage(rw, req, http.StatusInternalServerError, "Internal Error", "Internal Error")
 		return
 	}
@@ -523,8 +523,8 @@ func (p *OAuthProxy) OAuthCallback(rw http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		tags = append(tags, "error:state_parameter_error")
 		p.StatsdClient.Incr("application_error", tags, 1.0)
-		logger.WithRemoteAddress(remoteAddr).Error(
-			err, "could not unmarshal state parameter value")
+		logger.WithRemoteAddress(remoteAddr).WithError(err).Error(
+			"could not unmarshal state parameter value")
 		p.ErrorPage(rw, req, http.StatusInternalServerError, "Internal Error", "Internal Error")
 		return
 	}
@@ -543,8 +543,8 @@ func (p *OAuthProxy) OAuthCallback(rw http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		tags = append(tags, "error:csrf_parameter_error")
 		p.StatsdClient.Incr("application_error", tags, 1.0)
-		logger.WithRemoteAddress(remoteAddr).Error(
-			err, "couldn't unmarshal CSRF parameter value")
+		logger.WithRemoteAddress(remoteAddr).WithError(err).Error(
+			"couldn't unmarshal CSRF parameter value")
 		p.ErrorPage(rw, req, http.StatusInternalServerError, "Internal Error", "Internal Error")
 		return
 	}
@@ -604,7 +604,7 @@ func (p *OAuthProxy) OAuthCallback(rw http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		tags = append(tags, "error:save_session_error")
 		p.StatsdClient.Incr("application_error", tags, 1.0)
-		logger.WithRemoteAddress(remoteAddr).Error(err, "error saving session")
+		logger.WithRemoteAddress(remoteAddr).WithError(err).Error("error saving session")
 		p.ErrorPage(rw, req, http.StatusInternalServerError, "Internal Error", "Internal Error")
 		return
 	}
@@ -622,7 +622,7 @@ func (p *OAuthProxy) AuthenticateOnly(rw http.ResponseWriter, req *http.Request)
 	err := p.Authenticate(rw, req)
 	if err != nil {
 		p.StatsdClient.Incr("application_error", []string{"action:auth", "error:unauthorized_request"}, 1.0)
-		logger.Error(err, "error authenticating")
+		logger.WithError(err).Error("error authenticating")
 		http.Error(rw, "unauthorized request", http.StatusUnauthorized)
 	}
 	rw.WriteHeader(http.StatusAccepted)
@@ -687,7 +687,7 @@ func (p *OAuthProxy) Proxy(rw http.ResponseWriter, req *http.Request) {
 			p.ErrorPage(rw, req, http.StatusUnauthorized, "Unauthorized", "Token Expired or Revoked")
 			return
 		default:
-			logger.Error(err, "unknown error authenticating user")
+			logger.WithError(err).Error("unknown error authenticating user")
 			tags = append(tags, "error:internal_error")
 			p.StatsdClient.Incr("application_error", tags, 1.0)
 			// We don't know exactly what happened, but authenticating the user failed, show an error
@@ -722,7 +722,7 @@ func (p *OAuthProxy) Authenticate(rw http.ResponseWriter, req *http.Request) (er
 	session, err := p.sessionStore.LoadSession(req)
 	if err != nil {
 		// We loaded a cookie but it wasn't valid, clear it, and reject the request
-		logger.Error(err, "error authenticating user")
+		logger.WithError(err).Error("error authenticating user")
 		return err
 	}
 
@@ -758,7 +758,7 @@ func (p *OAuthProxy) Authenticate(rw http.ResponseWriter, req *http.Request) (er
 		// We failed to refresh the session successfully
 		// clear the cookie and reject the request
 		if err != nil {
-			logger.WithUser(session.Email).Error(err, "refreshing session failed")
+			logger.WithUser(session.Email).WithError(err).Error("refreshing session failed")
 			return err
 		}
 
@@ -776,8 +776,8 @@ func (p *OAuthProxy) Authenticate(rw http.ResponseWriter, req *http.Request) (er
 			//
 			// This could be from failing to encode the session properly.
 			// But, we clear the session cookie and reject the request!
-			logger.WithUser(session.Email).Error(
-				err, "could not save refreshed session")
+			logger.WithUser(session.Email).WithError(err).Error(
+				"could not save refreshed session")
 			return err
 		}
 	} else if session.ValidationPeriodExpired() {
@@ -790,8 +790,8 @@ func (p *OAuthProxy) Authenticate(rw http.ResponseWriter, req *http.Request) (er
 			// This user is now no longer authorized, or we failed to
 			// validate the user.
 			// Clear the cookie and reject the request
-			logger.WithUser(session.Email).Error(
-				err, "no longer authorized after validation period")
+			logger.WithUser(session.Email).WithError(err).Error(
+				"no longer authorized after validation period")
 			return ErrUserNotAuthorized
 		}
 
@@ -801,8 +801,8 @@ func (p *OAuthProxy) Authenticate(rw http.ResponseWriter, req *http.Request) (er
 
 			// This could be from failing to encode the session properly.
 			// But, we clear the session cookie and reject the request!
-			logger.WithUser(session.Email).Error(
-				err, "could not save validated session")
+			logger.WithUser(session.Email).WithError(err).Error(
+				"could not save validated session")
 			return err
 		}
 	}

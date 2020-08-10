@@ -352,7 +352,7 @@ func (p *SSOProvider) ValidateSessionState(s *sessions.SessionState, allowedGrou
 	params.Add("client_id", p.ClientID)
 	req, err := p.newRequest("GET", fmt.Sprintf("%s?%s", p.ValidateURL.String(), params.Encode()), nil)
 	if err != nil {
-		logger.WithUser(s.Email).Error(err, "error validating session state")
+		logger.WithUser(s.Email).WithError(err).Error("error validating session state")
 		return false
 	}
 
@@ -392,7 +392,7 @@ func (p *SSOProvider) ValidateSessionState(s *sessions.SessionState, allowedGrou
 			s.ValidDeadline = extendDeadline(p.SessionValidTTL)
 			return true
 		}
-		logger.WithUser(s.Email).Error(err, "error fetching group memberships")
+		logger.WithUser(s.Email).WithError(err).Error("error fetching group memberships")
 		return false
 	}
 

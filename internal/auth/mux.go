@@ -33,7 +33,7 @@ func NewAuthenticatorMux(config Configuration, statsdClient *statsd.Client) (*Au
 	for slug, providerConfig := range config.ProviderConfigs {
 		idp, err := newProvider(providerConfig, config.SessionConfig)
 		if err != nil {
-			logger.Error(err, fmt.Sprintf("error creating provider.%s", slug))
+			logger.WithError(err).Error(fmt.Sprintf("error creating provider.%s", slug))
 			return nil, err
 		}
 
@@ -46,7 +46,7 @@ func NewAuthenticatorMux(config Configuration, statsdClient *statsd.Client) (*Au
 			SetRedirectURL(config.ServerConfig, idpSlug),
 		)
 		if err != nil {
-			logger.Error(err, "error creating new Authenticator")
+			logger.WithError(err).Error("error creating new Authenticator")
 			return nil, err
 		}
 

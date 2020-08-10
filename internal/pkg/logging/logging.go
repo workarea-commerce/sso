@@ -50,7 +50,7 @@ func (l *LogEntry) Warn(args ...interface{}) {
 }
 
 // Error wraps the logrus Error function
-func (l *LogEntry) Error(err interface{}, args ...interface{}) {
+func (l *LogEntry) Error(err interface{}) {
 	l.logger.Error(args...)
 }
 
