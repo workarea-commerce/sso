@@ -790,7 +790,7 @@ func (p *OAuthProxy) Authenticate(rw http.ResponseWriter, req *http.Request) (er
 			// This user is now no longer authorized, or we failed to
 			// validate the user.
 			// Clear the cookie and reject the request
-			logger.WithUser(session.Email).WithError(err).Error(
+			logger.WithUser(session.Email).Error(
 				"no longer authorized after validation period")
 			return ErrUserNotAuthorized
 		}
