@@ -1,6 +1,7 @@
 package logging
 
 import (
+	"fmt"
 	"net/url"
 	"os"
 	"time"
@@ -50,7 +51,7 @@ func (l *LogEntry) Warn(args ...interface{}) {
 
 // Error wraps the logrus Error function
 func (l *LogEntry) Error(err interface{}, args ...interface{}) {
-	l.withField("error", err).logger.Error(args...)
+	l.logger.Error(args...)
 }
 
 // Fatal wraps the logrus Fatal function
@@ -151,8 +152,18 @@ func (l *LogEntry) WithAuthorizedUpstream(upstream string) *LogEntry {
 
 // WithError appends an `error` tag to a LogEntry. Useful for annotating non-Error log
 // entries (e.g. Fatal messages) with an `error` object.
+//func (l *LogEntry) WithError(err error) *LogEntry {
+//	return l.withFields(
+//		"error", err
+//		"kind", err.)
+//}
+
 func (l *LogEntry) WithError(err error) *LogEntry {
-	return l.withField("error_msg", err)
+	fields := l.Fields{
+		"message": err.Error(),
+		"kind":    fmt.Sprintf("%T", err),
+	}
+	return l.WithField("error", fields)
 }
 
 // WithHTTPStatus appends an `http_status` tag to a LogEntry.
