@@ -330,8 +330,7 @@ func (p *OAuthProxy) XHRError(rw http.ResponseWriter, req *http.Request, code in
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	logger.WithHTTPStatus(code).WithRequestURI(req.URL.String()).WithError(err).Error("error serving XHR")
+	logger.WithHTTPStatus(code).WithRequestURI(req.URL.String()).WithError(jsonError.Error).Error("error serving XHR")
 	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(code)
 	rw.Write(jsonBytes)
