@@ -3,6 +3,7 @@ package auth
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -570,7 +571,7 @@ func (p *Authenticator) getOAuthCallback(rw http.ResponseWriter, req *http.Reque
 		tags = append(tags, "error:csrf_token_mismatch")
 		p.StatsdClient.Incr("application_error", tags, 1.0)
 		logger.WithRemoteAddress(remoteAddr).WithError(
-			Errors.New("csrf_token_mismatch")).Error(
+			errors.New("csrf_token_mismatch")).Error(
 			"POTENTIAL ATTACK: CSRF token mismatch")
 		return "", HTTPError{Code: http.StatusForbidden, Message: "csrf failed"}
 	}
