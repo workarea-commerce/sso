@@ -152,7 +152,6 @@ func TestConfigValidate(t *testing.T) {
 				},
 				LoggingConfig: LoggingConfig{
 					Enable: true,
-					Level:  "INFO",
 				},
 				MetricsConfig: MetricsConfig{
 					StatsdConfig: StatsdConfig{
