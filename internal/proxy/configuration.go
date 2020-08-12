@@ -93,7 +93,6 @@ func DefaultProxyConfig() Configuration {
 		},
 		LoggingConfig: LoggingConfig{
 			Enable: true,
-			Level:  "INFO",
 		},
 		MetricsConfig: MetricsConfig{
 			StatsdConfig: StatsdConfig{
@@ -356,8 +355,7 @@ func (sc StatsdConfig) Validate() error {
 }
 
 type LoggingConfig struct {
-	Enable bool   `mapstructure:"enable"`
-	Level  string `mapstructure:"level"`
+	Enable bool `mapstructure:"enable"`
 }
 
 func (lc LoggingConfig) Validate() error {
