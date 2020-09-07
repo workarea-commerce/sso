@@ -177,7 +177,7 @@ func TestConfigValidate(t *testing.T) {
 		},
 		// Server Validate() tests
 		{
-			Name: "Server: missing server.port configuration",
+			Name: "ServerConfig: missing server.port configuration",
 			Validator: ServerConfig{
 				TimeoutConfig: &TimeoutConfig{
 					Write:    30 * time.Second,
