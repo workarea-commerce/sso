@@ -174,7 +174,7 @@ func (c Configuration) Validate() error {
 	}
 
 	if len(validationErrors) != 0 {
-		return xerrors.Errorf(strings.Join(validationErrors, "\n"))
+		return fmt.Errorf(strings.Join(validationErrors, "\n"))
 	}
 
 	return nil
@@ -188,11 +188,11 @@ type ProviderConfig struct {
 
 func (pc ProviderConfig) Validate() error {
 	if err := pc.ProviderURLConfig.Validate(); err != nil {
-		return xerrors.Errorf("invalid provider.providerurl config: %w", err)
+		return fmt.Errorf("invalid provider.providerurl config: %w", err)
 	}
 
 	if pc.ProviderType == "" {
-		return xerrors.Errorf("no provider.type configured")
+		return fmt.Errorf("no provider.type configured")
 	}
 
 	return nil
@@ -235,11 +235,11 @@ type SessionConfig struct {
 
 func (sc SessionConfig) Validate() error {
 	if err := sc.CookieConfig.Validate(); err != nil {
-		return xerrors.Errorf("invalid session.cookie config: %w", err)
+		return fmt.Errorf("invalid session.cookie config: %w", err)
 	}
 
 	if err := sc.TTLConfig.Validate(); err != nil {
-		return xerrors.Errorf("invalid session.ttl config: %w", err)
+		return fmt.Errorf("invalid session.ttl config: %w", err)
 	}
 	return nil
 }
@@ -256,11 +256,11 @@ type CookieConfig struct {
 
 func (cc *CookieConfig) Validate() error {
 	if cc.Secret == "" {
-		return xerrors.Errorf("no cookie.secret configured")
+		return fmt.Errorf("no cookie.secret configured")
 	}
 	decodedCookieSecret, err := base64.StdEncoding.DecodeString(cc.Secret)
 	if err != nil {
-		return xerrors.Errorf("invalid cookie.secret configured; expected base64-encoded bytes, as from `openssl rand 32 -base64`: %q", err)
+		return fmt.Errorf("invalid cookie.secret configured; expected base64-encoded bytes, as from `openssl rand 32 -base64`: %q", err)
 	}
 
 	validCookieSecretLength := false
@@ -272,12 +272,12 @@ func (cc *CookieConfig) Validate() error {
 	if validCookieSecretLength {
 		cc.decodedSecret = decodedCookieSecret
 	} else {
-		return xerrors.Errorf("invalid value for cookie.secret; must decode to 32 or 64 bytes, but decoded to %d bytes", len(decodedCookieSecret))
+		return fmt.Errorf("invalid value for cookie.secret; must decode to 32 or 64 bytes, but decoded to %d bytes", len(decodedCookieSecret))
 	}
 
 	cookie := &http.Cookie{Name: cc.Name}
 	if cookie.String() == "" {
-		return xerrors.Errorf("invalid cc.name: %q", cc.Name)
+		return fmt.Errorf("invalid cc.name: %q", cc.Name)
 	}
 	return nil
 }
@@ -299,10 +299,10 @@ type ClientConfig struct {
 
 func (cc ClientConfig) Validate() error {
 	if cc.ID == "" {
-		return xerrors.Errorf("no client.id configured")
+		return fmt.Errorf("no client.id configured")
 	}
 	if cc.Secret == "" {
-		return xerrors.Errorf("no client.secret configured")
+		return fmt.Errorf("no client.secret configured")
 	}
 	return nil
 }
@@ -318,7 +318,7 @@ func (sc ServerConfig) Validate() error {
 	}
 
 	if err := sc.TimeoutConfig.Validate(); err != nil {
-		return xerrors.Errorf("invalid server.timeout config: %w", err)
+		return fmt.Errorf("invalid server.timeout config: %w", err)
 	}
 	return nil
 }
@@ -339,7 +339,7 @@ type MetricsConfig struct {
 
 func (mc MetricsConfig) Validate() error {
 	if err := mc.StatsdConfig.Validate(); err != nil {
-		return xerrors.Errorf("invalid metrics.statsd config: %w", err)
+		return fmt.Errorf("invalid metrics.statsd config: %w", err)
 	}
 
 	return nil
@@ -381,13 +381,13 @@ type UpstreamConfigs struct {
 
 func (uc UpstreamConfigs) Validate() error {
 	if err := uc.DefaultConfig.Validate(); err != nil {
-		return xerrors.Errorf("invalid upstream.defaultconfig: %w", err)
+		return fmt.Errorf("invalid upstream.defaultconfig: %w", err)
 	}
 
 	if uc.ConfigsFile != "" {
 		r, err := os.Open(uc.ConfigsFile)
 		if err != nil {
-			return xerrors.Errorf("invalid upstream.configfile: %w", err)
+			return fmt.Errorf("invalid upstream.configfile: %w", err)
 		}
 		r.Close()
 	}
@@ -408,11 +408,11 @@ type DefaultConfig struct {
 
 func (dc DefaultConfig) Validate() error {
 	if err := dc.EmailConfig.Validate(); err != nil {
-		return xerrors.Errorf("invalid default.emailconfig: %w", err)
+		return fmt.Errorf("invalid default.emailconfig: %w", err)
 	}
 
 	if dc.ProviderSlug == "" {
-		return xerrors.Errorf("no defaultconfig.provider configured")
+		return fmt.Errorf("no defaultconfig.provider configured")
 	}
 
 	return nil
