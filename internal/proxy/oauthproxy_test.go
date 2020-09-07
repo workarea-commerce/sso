@@ -139,7 +139,7 @@ func testNewOAuthProxy(t *testing.T, optFuncs ...func(*OAuthProxy) error) (*OAut
 	standardOptFuncs = append(standardOptFuncs, optFuncs...)
 
 	proxy, err := NewOAuthProxy(config.SessionConfig, standardOptFuncs...)
-	testutil.Assert(t, err == nil, "could not create upstream reverse proxy: %v ----- %+v", err, config.SessionConfig)
+	testutil.Assert(t, err == nil, "could not create upstream reverse proxy: %v", err)
 
 	if requestSigner == nil {
 		t.Fatalf("request signer is nil")
