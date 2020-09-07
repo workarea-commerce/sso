@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -12,7 +13,6 @@ import (
 	"github.com/micro/go-micro/config"
 	"github.com/micro/go-micro/config/source/env"
 	"github.com/mitchellh/mapstructure"
-	"golang.org/x/xerrors"
 )
 
 // DefaultProxyCongig specifies all the defaults used to configure sso-proxy
@@ -205,14 +205,14 @@ type ProviderURLConfig struct {
 
 func (puc ProviderURLConfig) Validate() error {
 	if puc.External == "" {
-		return xerrors.New("no providerurl.external configured")
+		return errors.New("no providerurl.external configured")
 	} else {
 		providerURLExternal, err := url.Parse(puc.External)
 		if err != nil {
 			return err
 		}
 		if providerURLExternal.Scheme == "" || providerURLExternal.Host == "" {
-			return xerrors.New("providerurl.external must include scheme and host")
+			return errors.New("providerurl.external must include scheme and host")
 		}
 	}
 
@@ -222,7 +222,7 @@ func (puc ProviderURLConfig) Validate() error {
 			return err
 		}
 		if providerURLInternal.Scheme == "" || providerURLInternal.Host == "" {
-			return xerrors.New("providerurl.internal must include scheme and host")
+			return errors.New("providerurl.internal must include scheme and host")
 		}
 	}
 	return nil
@@ -314,7 +314,7 @@ type ServerConfig struct {
 
 func (sc ServerConfig) Validate() error {
 	if sc.Port == 0 {
-		return xerrors.New("no server.port configured")
+		return errors.New("no server.port configured")
 	}
 
 	if err := sc.TimeoutConfig.Validate(); err != nil {
@@ -352,11 +352,11 @@ type StatsdConfig struct {
 
 func (sc StatsdConfig) Validate() error {
 	if sc.Host == "" {
-		return xerrors.New("no statsd.host configured")
+		return errors.New("no statsd.host configured")
 	}
 
 	if sc.Port == 0 {
-		return xerrors.New("no statsd.port configured")
+		return errors.New("no statsd.port configured")
 	}
 
 	return nil
@@ -393,7 +393,7 @@ func (uc UpstreamConfigs) Validate() error {
 	}
 
 	if uc.Cluster == "" {
-		return xerrors.New("no upstream.cluster configured")
+		return errors.New("no upstream.cluster configured")
 	}
 	return nil
 }

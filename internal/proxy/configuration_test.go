@@ -1,14 +1,13 @@
 package proxy
 
 import (
+	"errors"
 	"io/ioutil"
 	"os"
 	"reflect"
 	"strings"
 	"testing"
 	"time"
-
-	"golang.org/x/xerrors"
 )
 
 func assertEq(want, have interface{}, t *testing.T) {
@@ -186,7 +185,7 @@ func TestConfigValidate(t *testing.T) {
 					Shutdown: 30 * time.Second,
 				},
 			},
-			ExpectedErr: xerrors.New("no server.port configured"),
+			ExpectedErr: errors.New("no server.port configured"),
 		},
 		// SessionConfig.CookieConfig Validate() tests
 		{
@@ -196,7 +195,7 @@ func TestConfigValidate(t *testing.T) {
 					Secret: "invalid_string_format",
 				},
 			},
-			ExpectedErr: xerrors.New(
+			ExpectedErr: errors.New(
 				"invalid session.cookie config: invalid cookie.secret configured; expected base64-encoded bytes, as from `openssl rand 32 -base64`: \"illegal base64 data at input byte 7\""),
 		},
 		{
@@ -207,7 +206,7 @@ func TestConfigValidate(t *testing.T) {
 					Secret: "NXKCLbT+jXZD9Ep5xDo2EsM82F/kv3KZT2vJ7XvV",
 				},
 			},
-			ExpectedErr: xerrors.New(
+			ExpectedErr: errors.New(
 				"invalid session.cookie config: invalid value for cookie.secret; must decode to 32 or 64 bytes, but decoded to 30 bytes"),
 		},
 		{
@@ -219,7 +218,7 @@ func TestConfigValidate(t *testing.T) {
 					Name:   "",
 				},
 			},
-			ExpectedErr: xerrors.New(
+			ExpectedErr: errors.New(
 				"invalid session.cookie config: invalid cc.name: \"\""),
 		},
 		// ClientConfig Validate() tests
@@ -228,7 +227,7 @@ func TestConfigValidate(t *testing.T) {
 			Validator: ClientConfig{
 				ID: "",
 			},
-			ExpectedErr: xerrors.New(
+			ExpectedErr: errors.New(
 				"no client.id configured"),
 		},
 		{
@@ -237,7 +236,7 @@ func TestConfigValidate(t *testing.T) {
 				ID:     "foo_id",
 				Secret: "",
 			},
-			ExpectedErr: xerrors.New(
+			ExpectedErr: errors.New(
 				"no client.secret configured"),
 		},
 		// MetricsConfig Validate() tests
@@ -248,7 +247,7 @@ func TestConfigValidate(t *testing.T) {
 					Host: "",
 				},
 			},
-			ExpectedErr: xerrors.New(
+			ExpectedErr: errors.New(
 				"invalid metrics.statsd config: no statsd.host configured"),
 		},
 		{
@@ -259,7 +258,7 @@ func TestConfigValidate(t *testing.T) {
 					Port: 0,
 				},
 			},
-			ExpectedErr: xerrors.New(
+			ExpectedErr: errors.New(
 				"invalid metrics.statsd config: no statsd.port configured"),
 		},
 		// ProviderConfig Validate() tests
@@ -272,7 +271,7 @@ func TestConfigValidate(t *testing.T) {
 					External: "https://foo.bar.com",
 				},
 			},
-			ExpectedErr: xerrors.New(
+			ExpectedErr: errors.New(
 				"no provider.type configured"),
 		},
 		{
@@ -284,7 +283,7 @@ func TestConfigValidate(t *testing.T) {
 					External: "",
 				},
 			},
-			ExpectedErr: xerrors.New(
+			ExpectedErr: errors.New(
 				"invalid provider.providerurl config: no providerurl.external configured"),
 		},
 		{
@@ -296,7 +295,7 @@ func TestConfigValidate(t *testing.T) {
 					External: "/simply/a/URL/path",
 				},
 			},
-			ExpectedErr: xerrors.New(
+			ExpectedErr: errors.New(
 				"invalid provider.providerurl config: providerurl.external must include scheme and host"),
 		},
 		{
@@ -308,7 +307,7 @@ func TestConfigValidate(t *testing.T) {
 					External: "https://foo.bar.com",
 				},
 			},
-			ExpectedErr: xerrors.New(
+			ExpectedErr: errors.New(
 				"invalid provider.providerurl config: providerurl.internal must include scheme and host"),
 		},
 		{
@@ -320,7 +319,7 @@ func TestConfigValidate(t *testing.T) {
 					External: "https://foo.bar.com",
 				},
 			},
-			ExpectedErr: xerrors.New(
+			ExpectedErr: errors.New(
 				"invalid provider.providerurl config: parse \"%ZZZ\": invalid URL escape \"%ZZ\""),
 		},
 		// UpstreamConfigs Validate() tests
@@ -332,7 +331,7 @@ func TestConfigValidate(t *testing.T) {
 				},
 				Cluster: "foo_cluster",
 			},
-			ExpectedErr: xerrors.New(
+			ExpectedErr: errors.New(
 				"invalid upstream.defaultconfig: no defaultconfig.provider configured"),
 		},
 		{
@@ -343,7 +342,7 @@ func TestConfigValidate(t *testing.T) {
 				},
 				Cluster: "",
 			},
-			ExpectedErr: xerrors.New(
+			ExpectedErr: errors.New(
 				"no upstream.cluster configured"),
 		},
 	}
@@ -385,7 +384,7 @@ func TestUpstreamConfigs(t *testing.T) {
 					ProviderSlug: "foo_provider",
 				},
 			},
-			ExpectedErr: xerrors.New(
+			ExpectedErr: errors.New(
 				"invalid upstream.configfile: open foo_invalid_file_path: no such file or directory"),
 		},
 	}

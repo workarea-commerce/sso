@@ -13,7 +13,6 @@ import (
 	"github.com/buzzfeed/sso/internal/pkg/options"
 	"github.com/buzzfeed/sso/internal/pkg/sessions"
 	"github.com/buzzfeed/sso/internal/proxy/providers"
-	"golang.org/x/xerrors"
 
 	"github.com/datadog/datadog-go/statsd"
 )
@@ -108,7 +107,7 @@ func SetUpstreamConfigs(uc *UpstreamConfigs, cc CookieConfig, svc ServerConfig) 
 	if uc.ConfigsFile != "" {
 		rawBytes, err := ioutil.ReadFile(uc.ConfigsFile)
 		if err != nil {
-			return xerrors.Errorf("error reading upstream configs file: %s", err)
+			return fmt.Errorf("error reading upstream configs file: %s", err)
 		}
 
 		templateVars := parseEnvironment(os.Environ())
@@ -128,7 +127,7 @@ func SetUpstreamConfigs(uc *UpstreamConfigs, cc CookieConfig, svc ServerConfig) 
 
 		uc.upstreamConfigs, err = loadServiceConfigs(rawBytes, uc.Cluster, uc.Scheme, templateVars, defaultUpstreamOptionsConfig)
 		if err != nil {
-			return xerrors.Errorf("error parsing upstream configs file %s", err)
+			return fmt.Errorf("error parsing upstream configs file %s", err)
 		}
 	}
 
@@ -144,7 +143,7 @@ func SetUpstreamConfigs(uc *UpstreamConfigs, cc CookieConfig, svc ServerConfig) 
 			}
 		}
 		if len(invalidUpstreams) != 0 {
-			return xerrors.Errorf(
+			return fmt.Errorf(
 				"missing setting: ALLOWED_EMAIL_DOMAINS, ALLOWED_EMAIL_ADDRESSES, ALLOWED_GROUPS default in environment or override in upstream config in the following upstreams: %v",
 				invalidUpstreams)
 		}
