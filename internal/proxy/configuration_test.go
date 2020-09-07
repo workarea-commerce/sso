@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -39,6 +40,20 @@ func TestDefaultConfiguration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected err validating default config: %v", err)
 	}
+}
+
+func TestConfigCatchAllValidateErrors(t *testing.T) {
+	config := Configuration{}
+	err := config.Validate()
+	expected := []string{
+		"invalid server config: no server.port configured",
+		"invalid provider config: invalid provider.providerurl config: no providerurl.external configured",
+		"invalid session config: invalid session.cookie config: no cookie.secret configured",
+		"invalid client config: no client.id configured",
+		"invalid upstream config: invalid upstream.defaultconfig: no defaultconfig.provider configured",
+		"invalid metrics config: invalid metrics.statsd config: no statsd.host configured",
+	}
+	assertEq(expected, strings.Split(err.Error(), "\n"), t)
 }
 
 func TestEnvironmentOverridesConfiguration(t *testing.T) {
@@ -128,7 +143,7 @@ func TestConfigValidate(t *testing.T) {
 					Secret: "bar-secret",
 				},
 				SessionConfig: SessionConfig{
-					CookieConfig: &CookieConfig{
+					CookieConfig: CookieConfig{
 						Name:     "_sso_proxy",
 						Expire:   168 * time.Hour,
 						Secure:   true,
@@ -161,24 +176,23 @@ func TestConfigValidate(t *testing.T) {
 				},
 			},
 		},
+		// Server Validate() tests
 		{
 			Name: "Server: missing server.port configuration",
-			Validator: Configuration{
-				ServerConfig: ServerConfig{
-					TimeoutConfig: &TimeoutConfig{
-						Write:    30 * time.Second,
-						Read:     30 * time.Second,
-						Shutdown: 30 * time.Second,
-					},
+			Validator: ServerConfig{
+				TimeoutConfig: &TimeoutConfig{
+					Write:    30 * time.Second,
+					Read:     30 * time.Second,
+					Shutdown: 30 * time.Second,
 				},
 			},
-			ExpectedErr: xerrors.New("invalid server config: no server.port configured"),
+			ExpectedErr: xerrors.New("no server.port configured"),
 		},
-
+		// SessionConfig.CookieConfig Validate() tests
 		{
 			Name: "CookieConfig: invalid cookie.secret",
 			Validator: SessionConfig{
-				CookieConfig: &CookieConfig{
+				CookieConfig: CookieConfig{
 					Secret: "invalid_string_format",
 				},
 			},
@@ -188,7 +202,7 @@ func TestConfigValidate(t *testing.T) {
 		{
 			Name: "CookieConfig: invalid cookie.secret value",
 			Validator: SessionConfig{
-				CookieConfig: &CookieConfig{
+				CookieConfig: CookieConfig{
 					// created with `openssl rand 30 -base64`
 					Secret: "NXKCLbT+jXZD9Ep5xDo2EsM82F/kv3KZT2vJ7XvV",
 				},
@@ -199,7 +213,7 @@ func TestConfigValidate(t *testing.T) {
 		{
 			Name: "CookieConfig: missing cookie.name",
 			Validator: SessionConfig{
-				CookieConfig: &CookieConfig{
+				CookieConfig: CookieConfig{
 					// created with `openssl rand 32 -base64`
 					Secret: "ekVGRbawiXuvVhgyKUIg0KQXw0ubdSd3rE9Pheog1JU=",
 					Name:   "",
@@ -208,7 +222,7 @@ func TestConfigValidate(t *testing.T) {
 			ExpectedErr: xerrors.New(
 				"invalid session.cookie config: invalid cc.name: \"\""),
 		},
-
+		// ClientConfig Validate() tests
 		{
 			Name: "ClientConfig: missing client.id",
 			Validator: ClientConfig{
@@ -226,7 +240,7 @@ func TestConfigValidate(t *testing.T) {
 			ExpectedErr: xerrors.New(
 				"no client.secret configured"),
 		},
-
+		// MetricsConfig Validate() tests
 		{
 			Name: "MetricsConfig: missing metrics.statsd.host",
 			Validator: MetricsConfig{
@@ -248,7 +262,7 @@ func TestConfigValidate(t *testing.T) {
 			ExpectedErr: xerrors.New(
 				"invalid metrics.statsd config: no statsd.port configured"),
 		},
-
+		// ProviderConfig Validate() tests
 		{
 			Name: "ProviderConfig: missing provider.type",
 			Validator: ProviderConfig{
@@ -309,9 +323,9 @@ func TestConfigValidate(t *testing.T) {
 			ExpectedErr: xerrors.New(
 				"invalid provider.providerurl config: parse \"%ZZZ\": invalid URL escape \"%ZZ\""),
 		},
-
+		// UpstreamConfigs Validate() tests
 		{
-			Name: "UpstreamConfig: missing upstreamconfig.defaultconfig.provider",
+			Name: "UpstreamConfisg: missing upstreamconfig.defaultconfig.provider",
 			Validator: UpstreamConfigs{
 				DefaultConfig: DefaultConfig{
 					ProviderSlug: "",
@@ -322,7 +336,7 @@ func TestConfigValidate(t *testing.T) {
 				"invalid upstream.defaultconfig: no defaultconfig.provider configured"),
 		},
 		{
-			Name: "UpstreamConfig: missing upstreamconfig.cluster",
+			Name: "UpstreamConfigs: missing upstreamconfig.cluster",
 			Validator: UpstreamConfigs{
 				DefaultConfig: DefaultConfig{
 					ProviderSlug: "foo_provider",

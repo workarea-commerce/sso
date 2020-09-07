@@ -2,9 +2,11 @@ package proxy
 
 import (
 	"encoding/base64"
+	"fmt"
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/micro/go-micro/config"
@@ -71,7 +73,7 @@ func DefaultProxyConfig() Configuration {
 			ProviderType: "sso",
 		},
 		SessionConfig: SessionConfig{
-			CookieConfig: &CookieConfig{
+			CookieConfig: CookieConfig{
 				Name:     "_sso_proxy",
 				Expire:   168 * time.Hour,
 				Secure:   true,
@@ -137,36 +139,42 @@ type Configuration struct {
 }
 
 func (c Configuration) Validate() error {
+	var validationErrors []string
+
 	if err := c.ServerConfig.Validate(); err != nil {
-		return xerrors.Errorf("invalid server config: %w", err)
+		validationErrors = append(validationErrors, fmt.Sprintf("invalid server config: %s", err))
 	}
 
 	if err := c.ProviderConfig.Validate(); err != nil {
-		return xerrors.Errorf("invalid provider config: %w", err)
+		validationErrors = append(validationErrors, fmt.Sprintf("invalid provider config: %s", err))
 	}
 
 	if err := c.SessionConfig.Validate(); err != nil {
-		return xerrors.Errorf("invalid session config: %w", err)
+		validationErrors = append(validationErrors, fmt.Sprintf("invalid session config: %s", err))
 	}
 
 	if err := c.ClientConfig.Validate(); err != nil {
-		return xerrors.Errorf("invalid client config: %w", err)
+		validationErrors = append(validationErrors, fmt.Sprintf("invalid client config: %s", err))
 	}
 
 	if err := c.UpstreamConfigs.Validate(); err != nil {
-		return xerrors.Errorf("invalid upstream config: %w", err)
+		validationErrors = append(validationErrors, fmt.Sprintf("invalid upstream config: %s", err))
 	}
 
 	if err := c.MetricsConfig.Validate(); err != nil {
-		return xerrors.Errorf("invalid metrics config: %w", err)
+		validationErrors = append(validationErrors, fmt.Sprintf("invalid metrics config: %s", err))
 	}
 
 	if err := c.LoggingConfig.Validate(); err != nil {
-		return xerrors.Errorf("invalid metrics config: %w", err)
+		validationErrors = append(validationErrors, fmt.Sprintf("invalid metrics config: %s", err))
 	}
 
 	if err := c.RequestSignerConfig.Validate(); err != nil {
-		return xerrors.Errorf("invalid metrics config: %w", err)
+		validationErrors = append(validationErrors, fmt.Sprintf("invalid metrics config: %s", err))
+	}
+
+	if len(validationErrors) != 0 {
+		return xerrors.Errorf(strings.Join(validationErrors, "\n"))
 	}
 
 	return nil
@@ -221,8 +229,8 @@ func (puc ProviderURLConfig) Validate() error {
 }
 
 type SessionConfig struct {
-	CookieConfig *CookieConfig `mapstructure:"cookie"`
-	TTLConfig    TTLConfig     `mapstructure:"ttl"`
+	CookieConfig CookieConfig `mapstructure:"cookie"`
+	TTLConfig    TTLConfig    `mapstructure:"ttl"`
 }
 
 func (sc SessionConfig) Validate() error {

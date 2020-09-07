@@ -61,7 +61,7 @@ func TestSetUpstreamConfigs(t *testing.T) {
 				serverConfigTimeoutShouldChange = true
 			}
 
-			err := SetUpstreamConfigs(tc.upstreamConfigs, &CookieConfig{}, tc.serverConfig)
+			err := SetUpstreamConfigs(tc.upstreamConfigs, CookieConfig{}, tc.serverConfig)
 			if err == nil && tc.expectedErrMsg != "" {
 				t.Fatalf("expected error but error was nil")
 			}
@@ -180,7 +180,7 @@ func TestUpstreamConfigsFile(t *testing.T) {
 				tc.upstreamConfigs.ConfigsFile = tempFile.Name()
 			}
 
-			err := SetUpstreamConfigs(tc.upstreamConfigs, &CookieConfig{}, tc.serverConfig)
+			err := SetUpstreamConfigs(tc.upstreamConfigs, CookieConfig{}, tc.serverConfig)
 			if err == nil && tc.expectedErrMsg != "" {
 				t.Fatalf("expected error but error was nil")
 			}
@@ -239,17 +239,17 @@ func TestProviderURLValidation(t *testing.T) {
 		{
 			name:                "scheme required",
 			providerURLExternal: "//provider.example.com",
-			expectedError:       "invalid provider config: invalid provider.providerurl config: providerurl.external must include scheme and host",
+			expectedError:       "invalid provider.providerurl config: providerurl.external must include scheme and host",
 		},
 		{
 			name:                "scheme and host required",
 			providerURLExternal: "/foo",
-			expectedError:       "invalid provider config: invalid provider.providerurl config: providerurl.external must include scheme and host",
+			expectedError:       "invalid provider.providerurl config: providerurl.external must include scheme and host",
 		},
 		{
 			name:                "invalid url rejected",
 			providerURLExternal: "%ZZZ",
-			expectedError:       "invalid provider config: invalid provider.providerurl config: parse \"%ZZZ\": invalid URL escape \"%ZZ\"",
+			expectedError:       "invalid provider.providerurl config: parse \"%ZZZ\": invalid URL escape \"%ZZ\"",
 		},
 	}
 	for _, tc := range testCases {
@@ -257,7 +257,7 @@ func TestProviderURLValidation(t *testing.T) {
 			config := DefaultProxyConfig()
 			config.ProviderConfig.ProviderURLConfig.External = tc.providerURLExternal
 			config.ProviderConfig.ProviderURLConfig.Internal = tc.providerURLInternal
-			err := config.Validate()
+			err := config.ProviderConfig.Validate()
 
 			if tc.expectedError != "" {
 				if err == nil {

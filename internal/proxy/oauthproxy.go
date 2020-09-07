@@ -84,7 +84,7 @@ type StateParameter struct {
 }
 
 // NewOAuthProxy creates a new OAuthProxy struct.
-func NewOAuthProxy(sc *SessionConfig, optFuncs ...func(*OAuthProxy) error) (*OAuthProxy, error) {
+func NewOAuthProxy(sc SessionConfig, optFuncs ...func(*OAuthProxy) error) (*OAuthProxy, error) {
 	p := &OAuthProxy{
 		cookieSecure: sc.CookieConfig.Secure,
 		Validators:   []options.Validator{},

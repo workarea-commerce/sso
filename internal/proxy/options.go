@@ -19,7 +19,7 @@ import (
 )
 
 // SetCookieStore sets the session and csrf stores as a functional option
-func SetCookieStore(cc *CookieConfig) func(*OAuthProxy) error {
+func SetCookieStore(cc CookieConfig) func(*OAuthProxy) error {
 	return func(op *OAuthProxy) error {
 		cookieStore, err := sessions.NewCookieStore(cc.Name,
 			sessions.CreateMiscreantCookieCipher(cc.decodedSecret),
@@ -104,7 +104,7 @@ func SetProvider(provider providers.Provider) func(*OAuthProxy) error {
 	}
 }
 
-func SetUpstreamConfigs(uc *UpstreamConfigs, cc *CookieConfig, svc ServerConfig) error {
+func SetUpstreamConfigs(uc *UpstreamConfigs, cc CookieConfig, svc ServerConfig) error {
 	if uc.ConfigsFile != "" {
 		rawBytes, err := ioutil.ReadFile(uc.ConfigsFile)
 		if err != nil {

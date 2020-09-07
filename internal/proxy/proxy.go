@@ -67,7 +67,7 @@ func New(config Configuration, statsdClient *statsd.Client) (*SSOProxy, error) {
 			SetValidators(validators),
 		)
 
-		oauthproxy, err := NewOAuthProxy(&config.SessionConfig, optFuncs...)
+		oauthproxy, err := NewOAuthProxy(config.SessionConfig, optFuncs...)
 		if err != nil {
 			return nil, err
 		}
