@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -20,8 +21,14 @@ import (
 // SetCookieStore sets the session and csrf stores as a functional option
 func SetCookieStore(cc CookieConfig) func(*OAuthProxy) error {
 	return func(op *OAuthProxy) error {
+
+		decodedCookieSecret, err := base64.StdEncoding.DecodeString(cc.Secret)
+		if err != nil {
+			return err
+		}
+
 		cookieStore, err := sessions.NewCookieStore(cc.Name,
-			sessions.CreateMiscreantCookieCipher(cc.decodedSecret),
+			sessions.CreateMiscreantCookieCipher(decodedCookieSecret),
 			func(c *sessions.CookieStore) error {
 				c.CookieDomain = cc.Domain
 				c.CookieHTTPOnly = cc.HTTPOnly

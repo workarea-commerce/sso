@@ -112,7 +112,7 @@ var (
 	_ Validator = Configuration{}
 	_ Validator = ProviderConfig{}
 	_ Validator = SessionConfig{}
-	_ Validator = &CookieConfig{}
+	_ Validator = CookieConfig{}
 	_ Validator = TTLConfig{}
 	_ Validator = ClientConfig{}
 	_ Validator = ServerConfig{}
@@ -244,16 +244,15 @@ func (sc SessionConfig) Validate() error {
 }
 
 type CookieConfig struct {
-	Name          string        `mapstructure:"name"`
-	Secret        string        `mapstructure:"secret"`
-	Expire        time.Duration `mapstructure:"expire"`
-	Domain        string        `mapstructure:"domain"`
-	Secure        bool          `mapstructure:"secure"`
-	HTTPOnly      bool          `mapstructure:"httponly"`
-	decodedSecret []byte
+	Name     string        `mapstructure:"name"`
+	Secret   string        `mapstructure:"secret"`
+	Expire   time.Duration `mapstructure:"expire"`
+	Domain   string        `mapstructure:"domain"`
+	Secure   bool          `mapstructure:"secure"`
+	HTTPOnly bool          `mapstructure:"httponly"`
 }
 
-func (cc *CookieConfig) Validate() error {
+func (cc CookieConfig) Validate() error {
 	if cc.Secret == "" {
 		return fmt.Errorf("no cookie.secret configured")
 	}
@@ -268,9 +267,7 @@ func (cc *CookieConfig) Validate() error {
 			validCookieSecretLength = true
 		}
 	}
-	if validCookieSecretLength {
-		cc.decodedSecret = decodedCookieSecret
-	} else {
+	if !validCookieSecretLength {
 		return fmt.Errorf("invalid value for cookie.secret; must decode to 32 or 64 bytes, but decoded to %d bytes", len(decodedCookieSecret))
 	}
 
